@@ -1,0 +1,61 @@
+<!doctype html>
+
+<html lang="en">
+
+<head>
+    <meta charset="utf-8">
+
+    <title>Safire</title>
+    <meta name="description" content="Safire">
+    <meta name="author" content="Safire">
+    <style>
+        div {
+            padding: 1rem;
+        }
+
+        .safireTarget {
+            border: 1px solid red;
+            display: inline-block;
+        }
+    </style>
+</head>
+
+<body>
+    <div id="Safire">
+        <div class="{{deepclass}}">
+
+            {{anchor1}}
+            {{anchor2}}
+
+        </div>
+        <div>
+            {{anchor3}}
+            <div>
+                <div class="{{class1}}">
+                    {{anchor4}}
+                </div>
+            </div>
+        </div>
+        {{anchor1}}
+        {{anchor2}}
+        {{anchor1}}
+        {{anchor2}}
+    </div>
+    <button
+        onclick="s.anchor1 = 'this is test for a <div class={{deepclass}}> deep div with a {{deep1}}</div>';s.deep1 = 'loldeeper'">Doa
+        fuck toact</button>
+
+    <button onclick="s.anchor2 = 'GGGGGGG{{deep1}}'">Do bfuck to react 2</button>
+    <button onclick="s.deep1 = 'DEEEP 1 for HARDEEP'">Do bfuck to react 2</button>
+    <button onclick="s.anchor3 = '<h1>Big title{{deep1}}</h1>'">Do bfuck to react 3</button>
+
+    <button onclick="s.anchor4 = '<div>{{anchor6}}<div>{{anchor7}}</div></div>'">Do bfuck to react 4</button>
+    <button onclick="s.deep.shit = '<div>{{deep1}} lololololol</div>'">Do bfuck to react 5</button>
+</body>
+
+<script type="text/javascript" src="./index.js"></script>
+
+
+
+
+</html>
