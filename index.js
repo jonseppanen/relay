@@ -1,68 +1,17 @@
-
-
-
-/*
-const templateOuterHTML = (node) => {
-    let domfrag = document.createDocumentFragment();
-    let shellWorker = document.createElement('div');
-    domfrag.appendChild(shellWorker);
-    let outerShell = node.cloneNode();
-    shellWorker.innerHTML = outerShell.outerHTML.slice(0).replace(bigote, (match, variable) => variable.split('.').reduce((o, i) => o[i], R) || '');
-    return shellWorker.firstElementChild;
-}*/
-
-
 class Spark {
     constructor(node, relay) {
         this.node = node;
         this.relay = relay;
-        this.template = node.cloneNode(true);
+        this.template = (node.outerHTML || node.nodeValue).slice(0);
         this.watched = [];
         this.update();
     }
 
     bigote = /\{\{([^\{\{\}\}]+)\}\}/g;
 
-    splitter = (htmlString) => {
-        let domfrag = document.createDocumentFragment();
-        let newNode = document.createElement('div');
-        domfrag.appendChild(newNode);
-        newNode.innerHTML = htmlString;
-        let newString = '';
-        for (let child of newNode.childNodes) {
-            if (child.nodeValue) {
-                if (child.nodeValue.includes('{{')) {
-                    newString += child.nodeValue.slice(0).replace(this.bigote, (match, variable) => {
-                        let value = variable.split('.').reduce((o, i) => o[i], R) || '';
-                        if (value.includes("<")) {
-                            return this.splitter(value);
-                        }
-                        else {
-                            return value;
-                        }
-                    });
-                }
-                else {
-                    newString += child.nodeValue;
-                }
-            }
-            else {
-                if (child.outerHTML.includes('{{')) {
-                    newString += '<span class="RelayTarget">' + child.outerHTML.slice(0) + '</span>';
-                }
-                else {
-                    newString += child.outerHTML;
-                }
-            }
-        }
-
-        return newString;
-
-    }
-
     usurp = (replaced, replacer) => {
         replaced.parentNode.insertBefore(replacer, replaced.nextSibling);
-        replaced.remove();
+        replaced.parentNode.removeChild(replaced)
         return replacer;
     }
 
@@ -71,29 +20,41 @@ class Spark {
         let domfrag = document.createDocumentFragment();
         let workNode = document.createElement('div');
         domfrag.appendChild(workNode);
-        workNode.innerHTML = this.template.outerHTML.slice(0).replace(this.bigote, (match, variable) => {
+        let newTemplate = this.template.slice(0).replace(this.bigote, (match, variable) => {
 
-            if (!this.watched.includes(variable)) this.watched.push(variable);
+
             let value = variable.split('.').reduce((o, i) => o && o[i], this.relay.rootProxy) || '';
-            if (value.includes("<") || value.includes("{{")) {
-                return this.splitter(value);
+            if (!this.watched.includes(variable)) this.watched.push(variable);
+
+            if (value.includes("{{")) {
+                let templateWorker = document.createElement("div");
+                templateWorker.innerHTML = value;
+                let newString = '';
+
+                templateWorker.childNodes.forEach(child => {
+                    let valCheck = (child.nodeValue || child.outerHTML).slice(0);
+                    newString += (valCheck.includes("{{")) ? '<span class="RelayTarget">' + valCheck + '</span>' : valCheck
+                })
+
+                templateWorker.remove();
+                return newString;
             }
             else {
                 return value;
             }
-
         });
 
-        let newNode = workNode.firstElementChild;
+        workNode.innerHTML = newTemplate;
+        let newNode = workNode.firstChild;
 
-        for (let newSpark of newNode.querySelectorAll('.RelayTarget')) {
-            this.usurp(newSpark, this.relay.register(newSpark.firstChild))
+        if (newNode.nodeType !== 3) {
+            newNode.querySelectorAll('.RelayTarget').forEach(newSpark => {
+                this.relay.register(this.usurp(newSpark, newSpark.firstChild))
+            })
         }
 
         this.node = this.usurp(this.node, newNode)
     }
-
-
 }
 
 class Relay {
@@ -118,7 +79,7 @@ class Relay {
     updateWatchers = (target, property) => {
         this.registry.filter(sNode => sNode.watched.includes(this.getDotPath(target, property))).forEach(sNode => sNode.update());
         this.registry = this.registry.filter(sNode => document.getElementById("Relay").contains(sNode.node));
-        console.log(this.registry);
+        //   console.log(this.registry);
     }
 
     relayProxy = {
@@ -137,6 +98,8 @@ class Relay {
         return this.rootProxy;
     }
 }
+
+
 
 const R = new Relay(document.getElementById("Relay"))
 
