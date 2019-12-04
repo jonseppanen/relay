@@ -17,12 +17,6 @@
             padding: 1rem;
         }
 
-        .safireTarget {
-
-            display: inline-block;
-        }
-
-
         @keyframes fadeInDown {
             0% {
                 opacity: 0;
@@ -54,9 +48,10 @@
             </div>
         </div>
         {{anchor1}}
-        {{anchor2}}
-        {{anchor1}}
-        {{anchor2}}
+      <div>{{anchor2}}</div>  
+        {{anchor3}}
+        {{anchor4}}
+        <div>{{anchor5}}</div>
     </div>
     <button onmousedown="R.anchor1 = 'this is test for a <div class={{deepclass}}> deep div with a {{deep1}}</div>';">Doa fuck toact1</button>
     <button onmousedown="R.anchor2 = 'GGGGGGG{{deep1}}';">Do bfuck to react 2</button>
@@ -64,9 +59,11 @@
     <button onmousedown="R.anchor3 = '<h1>Big title{{deep1}}</h1>';">Do bfuck to react 4</button>
 
     <button onmousedown="R.anchor4 = '<div>{{anchor6}}<div>{{anchor7}}</div></div>';">Do bfuck to react 5</button>
-    <button onmousedown="R.deep.shit = '<div>{{deep1}} lololololol</div>';">Do bfuck to react 6</button>
+    <button onmousedown="R.deep.shit = '<div>{{deep1}} lololololol</div><div>{{deep1}} seconddiv</div><div>third<div>';">Do bfuck to react 6</button>
     <button onmousedown="gg();">Do bfuck to react 7</button>
     <button onmousedown="R.deep1 = 'loldeeper';">Doa fuck toact 8</button>
+    <button onmousedown="R.anchor5 = '<div>danglertest{{newdeeptest}}</div>';">Doa fuck toact 9</button>
+    <button onmousedown="R.newdeeptest2 = '<h2>boom</h2>{{deep1}}';">Doa fuck toact 9</button>
 </body>
 
 <script type="text/javascript" src="./index.js"></script>
