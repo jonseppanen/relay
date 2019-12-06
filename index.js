@@ -2,7 +2,6 @@ class Spark {
     constructor(nodes, relay) {
         this.nodes = nodes;
         this.relay = relay;
-
         if (nodes[0].classList && nodes[0].classList.contains('RelayTarget')) {
             this.dotPath = nodes[0].getAttribute('data-value');
         }
@@ -16,12 +15,19 @@ class Spark {
     update = () => {
         this.watched = this.dotPath ? [this.dotPath] : [];
         let workNode = document.createElement('div');
-        workNode.innerHTML = this.relay.inject((this.template || (this.dotPath.split('.').reduce((o, i) => o && o[i], this.relay.data) || '')).slice(0), this.watched, this.relay);
+        let template = this.relay.inject((this.template || (this.dotPath.split('.').reduce((o, i) => o && o[i], this.relay.data) || '')).slice(0), this.watched, this.relay);
+        workNode.insertAdjacentHTML('afterbegin', template);
         workNode.querySelectorAll('.RelayTarget').forEach(newSpark => this.relay.register([newSpark]))
 
         let oldNodes = this.nodes;
         let newNodes = Array.from(workNode.childNodes).reverse();
-        newNodes.forEach(node => oldNodes[0].parentNode.insertBefore(node, oldNodes[0].nextSibling));
+        newNodes.forEach(node => {
+            if(node.nodeType !== 3 && node.querySelectorAll('style').length > 0){
+                let shadow = node.attachShadow({ mode: 'open' });
+                while (node.firstChild) shadow.appendChild(node.firstChild); 
+            }
+            oldNodes[0].parentNode.insertBefore(node, oldNodes[0].nextSibling)
+        });
         this.nodes = newNodes;
         oldNodes.forEach(node => node.remove())
     }
@@ -107,7 +113,23 @@ R.newdeeptest = '<div>cascade{{newdeeptest2}}</div>'
 R.newdeeptest2 = ' to here'
 
 const gg = () => {
-    R.deepclass = 'hnggggggg'
+    R.deepclass = 'hnggggggg';
+    R.anchor5 = `<div>
+    <style>
+        div{
+            background:#0F0;
+        }
+        .testspan{
+            color:#00F;
+        }
+    </style>
+    <div>This is testing shadow root <span class='testspan'>with a test span</span> {{anchor7}}</div></div>
+    `
+}
+
+const gg2 = () => {
+    R.deepclass = 'hnggggggg';
+    R.anchor5 = `<div>shadowgone!</div>`
 }
 
 
