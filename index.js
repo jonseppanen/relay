@@ -13,6 +13,7 @@ class Spark {
     }
 
     update = () => {
+
         this.watched = this.dotPath ? [this.dotPath] : [];
         let workNode = document.createElement('div');
         let template = this.relay.inject((this.template || (this.dotPath.split('.').reduce((o, i) => o && o[i], this.relay.data) || '')).slice(0), this.watched, this.relay);
@@ -22,16 +23,24 @@ class Spark {
         let oldNodes = this.nodes;
         let newNodes = Array.from(workNode.childNodes).reverse();
         newNodes.forEach(node => {
-            if(node.nodeType !== 3 && node.querySelectorAll('style').length > 0){
+
+            if (node.nodeType !== 3 && node.querySelectorAll('style').length > 0) {
+                let nodeShell = node.cloneNode();
+                nodeShell.insertAdjacentHTML('afterbegin', node.querySelectorAll('style')[0].outerHTML.slice(0) + '<slot></slot>');
+                node.querySelectorAll('style')[0].remove();
                 let shadow = node.attachShadow({ mode: 'open' });
-                while (node.firstChild) shadow.appendChild(node.firstChild); 
+                shadow.innerHTML = nodeShell.outerHTML;
             }
+
             oldNodes[0].parentNode.insertBefore(node, oldNodes[0].nextSibling)
         });
         this.nodes = newNodes;
-        oldNodes.forEach(node => node.remove())
+        oldNodes.forEach(node => {
+            node.remove()
+        })
     }
 }
+
 class Relay {
     register = (nodes) => {
         const sNode = new Spark(nodes, this);
@@ -96,7 +105,9 @@ class Relay {
     }
 }
 
-const R = new Relay(document.getElementById("Relay"))
+const R = new Relay(document.getElementById("Relay"));
+
+(async () => R.temptest = (await import(`./templates/cardExample.mjs`)).default('{{anchor5}}'))();
 
 R.deep = {}
 R.deep.shit = "gg"
@@ -110,7 +121,8 @@ R.anchor7 = '<div>anchor7{{deep.shit}}</div>'
 R.deepclass = 'fucky'
 R.class1 = 'notfucky'
 R.newdeeptest = '<div>cascade{{newdeeptest2}}</div>'
-R.newdeeptest2 = ' to here'
+R.newdeeptest2 = ' to here';
+
 
 const gg = () => {
     R.deepclass = 'hnggggggg';
