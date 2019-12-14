@@ -5,10 +5,11 @@
 <head>
     <meta charset="utf-8">
 
-    <title>Safire</title>
-    <meta name="description" content="Safire">
-    <meta name="author" content="Safire">
-    <style>
+    <title>Relay</title>
+    <meta name="description" content="Relay">
+    <meta name="author" content="Relay">
+    <script type="module" src="./Relay.js"></script>
+     <style>
         * {
             animation: fadeInDown 500ms ease-in-out;
         }
@@ -48,18 +49,22 @@
             </div>
         </div>
         {{anchor1}}
-      <div>{{anchor2}}</div>  
+        <div>{{anchor2}}</div>
         {{anchor3}}
         {{anchor4}}
         <div>{{anchor5}}</div>
     </div>
-    <button onmousedown="R.anchor1 = 'this is test for a <div class={{deepclass}}> deep div with a {{deep1}}</div>';">Doa fuck toact1</button>
+    <button
+        onmousedown="R.anchor1 = 'this is test for a <div class={{deepclass}}> deep div with a {{deep1}}</div>';">Doa
+        fuck toact1</button>
     <button onmousedown="R.anchor2 = 'GGGGGGG{{deep1}}';">Do bfuck to react 2</button>
     <button onmousedown="R.deep1 = 'DEEEP 1 for HARDEEP';">Do bfuck to react 3</button>
     <button onmousedown="R.anchor3 = '<h1>Big title{{deep1}}</h1>';">Do bfuck to react 4</button>
 
     <button onmousedown="R.anchor4 = '<div>{{anchor6}}<div>{{anchor7}}</div></div>';">Do bfuck to react 5</button>
-    <button onmousedown="R.deep.shit = '<div>{{deep1}} lololololol</div><div>{{deep1}} seconddiv</div><div>third<div>';">Do bfuck to react 6</button>
+    <button
+        onmousedown="R.deep.shit = '<div>{{deep1}} lololololol</div><div>{{deep1}} seconddiv</div><div>third<div>';">Do
+        bfuck to react 6</button>
     <button onmousedown="gg();">Do bfuck to react 7</button>
     <button onmousedown="R.deep1 = 'loldeeper';">Doa fuck toact 8</button>
     <button onmousedown="R.anchor5 = '<div>danglertest{{newdeeptest}}</div>';">Doa fuck toact 9</button>
@@ -67,7 +72,54 @@
     <button onmousedown="gg2();'<h2>boom</h2>{{deep1}}';">Doa fuck toact 10</button>
 </body>
 
-<script type="text/javascript" src="./index.js"></script>
+<script>
+
+   // import { Relay } from './Relay.js'
+
+    const R = new Relay(document.getElementById("Relay"));
+
+    (async () => R.temptest = (await import(`./templates/cardExample.mjs`)).default('{{anchor5}}'))();
+
+    R.deep = {}
+    R.deep.shit = "gg"
+    R.anchor1 = 'prestring<div>anchor1{{deepclass}}</div>'
+    R.anchor2 = 'anchor2<div>{{deep.shit}}</div>'
+    R.anchor3 = '<div><h2>anchor3{{deepclass}}</h2></div>'
+    R.anchor4 = '<div>anchor4{{deepclass}}</div>'
+    R.anchor5 = '<div>anchor5{{newdeeptest}}</div>'
+    R.anchor6 = '<div>anchor6</div>'
+    R.anchor7 = '<div>anchor7{{deep.shit}}</div>'
+    R.deepclass = 'fucky'
+    R.class1 = 'notfucky'
+    R.newdeeptest = '<div>cascade{{newdeeptest2}}</div>'
+    R.newdeeptest2 = ' to here';
+
+
+    const gg = () => {
+        R.deepclass = 'hnggggggg';
+        R.anchor5 = `<div>
+    <style>
+        div{
+            background:#0F0;
+        }
+        .testspan{
+            color:#00F;
+        }
+    </style>
+    <div>This is testing shadow root <span class='testspan'>with a test span</span> {{anchor7}}</div></div>
+    `
+    }
+
+    const gg2 = () => {
+        R.deepclass = 'hnggggggg';
+        R.anchor5 = `<div>shadowgone!</div>`
+    }
+
+
+
+
+
+</script>
 
 
 
