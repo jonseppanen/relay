@@ -41,7 +41,7 @@ class Spark {
     }
 }
 
-export default class Relay {
+export class Relay {
     register = (nodes) => {
         const sNode = new Spark(nodes, this);
         this.registry.push(sNode);
@@ -80,7 +80,7 @@ export default class Relay {
 
     relayProxy = {
         set: (target, property, value) => {
-            if (JSON.stringify(target[property]) === JSON.stringify(value)) return false;
+            if (JSON.stringify(target[property]) === JSON.stringify(value)) return true;
             target[property] = (Array.isArray(value) || typeof value === "object") ? () => { this.ancestry.set(value, { parent: target, keyname: property }); return new Proxy(value, this.relayProxy) } : value;
             this.registry.filter(sNode => sNode.watched.includes(this.getDotPath(target, property))).forEach(sNode => sNode.update());
             this.registry = this.registry.filter(sNode => this.rootElement.contains(sNode.nodes[0]));
@@ -104,3 +104,5 @@ export default class Relay {
         return this.data;
     }
 }
+
+export default Relay;
