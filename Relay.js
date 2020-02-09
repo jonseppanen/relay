@@ -16,6 +16,12 @@ class Spark {
 
         this.watched = this.dotPath ? [this.dotPath] : [];
         let workNode = document.createElement('div');
+        //  if(Array.isArray(value)){
+        //    let relayValue = this.template || (this.dotPath && this.dotPath.split('.').reduce((o, i) => o && o[i], this.relay.data) || '').slice(0)
+        //     console.log(relayValue);
+        //    if(this.dotPath) console.log(this.dotPath.split('.'));
+        //    console.log(this.dotPath.split('.').reduce((o, i) => o && o[i], this.relay.data));
+        //    }
         let template = this.relay.inject((this.template || (this.dotPath.split('.').reduce((o, i) => o && o[i], this.relay.data) || '')).slice(0), this.watched, this.relay);
         workNode.insertAdjacentHTML('afterbegin', template);
         workNode.querySelectorAll('.RelayTarget').forEach(newSpark => this.relay.register([newSpark]))
@@ -39,6 +45,11 @@ class Spark {
             node.remove()
         })
     }
+}
+
+export async function Component(template, ...templateArgs) {
+    let response = await fetch(`./templates/${template}`);
+    return new Function("return `" + await response.text() + "`;").call(templateArgs);
 }
 
 export class Relay {
@@ -78,12 +89,17 @@ export class Relay {
         });
     }
 
+
     relayProxy = {
         set: (target, property, value) => {
+            if (Promise.resolve(value) == value) return (async () => this.data[property] = (await value))();
             if (JSON.stringify(target[property]) === JSON.stringify(value)) return true;
-            target[property] = (Array.isArray(value) || typeof value === "object") ? () => { this.ancestry.set(value, { parent: target, keyname: property }); return new Proxy(value, this.relayProxy) } : value;
+
+            target[property] = (Array.isArray(value) || (typeof value === "object")) ? () => { this.ancestry.set(value, { parent: target, keyname: property }); return new Proxy(value, this.relayProxy) } : value;
             this.registry.filter(sNode => sNode.watched.includes(this.getDotPath(target, property))).forEach(sNode => sNode.update());
+
             this.registry = this.registry.filter(sNode => this.rootElement.contains(sNode.nodes[0]));
+
             return true;
         }
     };

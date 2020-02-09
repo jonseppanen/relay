@@ -1,9 +1,8 @@
-import { Relay } from '/Relay.js'
+import { Relay, Component } from '/Relay.js'
 
 window.R = new Relay(document.getElementById("Relay"));
 
-(async () => R.temptest = (await import(`./templates/cardExample.mjs`)).default('{{anchor5}}'))();
-
+R.temptest = Component('cardExample.html', '{{anchor5}}');
 R.deep = {}
 R.deep.shit = "gg"
 R.anchor1 = 'prestring<div>anchor1{{deepclass}}</div>'
