@@ -1,3 +1,21 @@
+/**
+ * Relay Component
+ * Example use: Component('path/to/html/file', argument1, argument2...)
+ *
+ * @param {*} templateHTML Path to the template file. This is a plain html file that compiles to a template literal.
+ *     Components loaded by Relay will have their styling automatically scoped using shadow dom, so you don't
+ *     need an external module for this. You can pass arguments to use in this css with templateArgs.
+ * @param  {...any} templateArgs Arguments to pass to the HTML as template literal values. If there is more than
+ *     one argument they will be automatically sent as an array, which can be referred to as ${this[n]}.
+ *     If there is only argument, it will be sent as ${this}. In which case, you can send an array to refer to with
+ *     ${this[n]} or key lookup with ${this.key} or ${this["key"]}.
+ *     IMPORTANT: If you wish to use/watch Relay values, don't overthink it. Just use a bigote {{with.a.dot.path}}
+ */
+export async function Component(templateHTML, ...templateArgs) {
+    let response = await fetch(`./templates/${templateHTML}`);
+    return new Function("return `" + await response.text() + "`;").call((templateArgs.length > 1) ? templateArgs : templateArgs[0]);
+}
+
 class Spark {
     constructor(nodes, relay) {
         this.nodes = nodes;
@@ -45,11 +63,6 @@ class Spark {
             node.remove()
         })
     }
-}
-
-export async function Component(template, ...templateArgs) {
-    let response = await fetch(`./templates/${template}`);
-    return new Function("return `" + await response.text() + "`;").call(templateArgs);
 }
 
 export class Relay {
