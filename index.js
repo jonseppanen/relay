@@ -37,7 +37,16 @@ window.gg2 = () => {
     R.deepclass = 'hnggggggg';
     R.anchor5 = `<div>shadowgone!</div>`
 }
+window.gg3 = () => {
+    return [
+        Component('cardExample.html', '{{anchor5}}'),
+        Component('cardExample.html', '{{anchor5}}'),
+        Component('cardExample.html', '{{anchor5}}')
+    ];
+}
 
-
+window.gg4 = () => {
+    return Component('cardExample.html', '{{anchor5}}')
+}
 
 

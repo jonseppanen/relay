@@ -13,7 +13,7 @@
  */
 export async function Component(templateHTML, ...templateArgs) {
     let response = await fetch(`./templates/${templateHTML}`);
-    return new Function("return `" + await response.text() + "`;").call((templateArgs.length > 1) ? templateArgs : templateArgs[0]);
+    return await new Function("return `" + await response.text() + "`;").call((templateArgs.length > 1) ? templateArgs : templateArgs[0]);
 }
 
 class Spark {
@@ -40,7 +40,9 @@ class Spark {
         //    if(this.dotPath) console.log(this.dotPath.split('.'));
         //    console.log(this.dotPath.split('.').reduce((o, i) => o && o[i], this.relay.data));
         //    }
-        let template = this.relay.inject((this.template || (this.dotPath.split('.').reduce((o, i) => o && o[i], this.relay.data) || '')).slice(0), this.watched, this.relay);
+        //  console.log('===========================');
+        //console.log(this.dotPath ? this.dotPath.split('.').reduce((o, i) => o && o[i], this.relay.data) : this.template);
+        let template = this.relay.inject((this.template || (this.dotPath.split('.').reduce((o, i) => o ? o[i] : null, this.relay.data) || '')).slice(0), this.watched, this.relay);
         workNode.insertAdjacentHTML('afterbegin', template);
         workNode.querySelectorAll('.RelayTarget').forEach(newSpark => this.relay.register([newSpark]))
 
@@ -86,6 +88,9 @@ export class Relay {
 
     inject = (template, watcher) => {
         const bigote = /\{\{([^\{\{\}\}]+)\}\}/g;
+        if (Array.isArray(template)) {
+            template = template.join('');
+        }
         return template.slice(0).replace(bigote, (match, variable) => {
             let value = variable.split('.').reduce((o, i) => o && o[i], this.data) || '';
 
@@ -102,15 +107,41 @@ export class Relay {
         });
     }
 
+    resolvePromises = async (value) => {
+        
+        if (Promise.resolve(value) == value) {
+            let promised = await value;
+            value = promised;
+        } else if (Array.isArray(value) && value.find(subValue => Promise.resolve(subValue) == subValue)) {
+            let promised = await Promise.all(value);
+            value = promised;
+        }
+        return value;
+    }
 
     relayProxy = {
-        set: (target, property, value) => {
-            if (Promise.resolve(value) == value) return (async () => this.data[property] = (await value))();
+        set: async (target, property, value) => {
+
+            //Await all pending promises before setting value
+            if (Promise.resolve(value) == value) {
+                let promised = await value;
+                value = promised;
+            } else if (Array.isArray(value) && value.find(subValue => Promise.resolve(subValue) == subValue)) {
+                let promised = await Promise.all(value);
+                value = promised;
+            }
+
             if (JSON.stringify(target[property]) === JSON.stringify(value)) return true;
 
-            target[property] = (Array.isArray(value) || (typeof value === "object")) ? () => { this.ancestry.set(value, { parent: target, keyname: property }); return new Proxy(value, this.relayProxy) } : value;
-            this.registry.filter(sNode => sNode.watched.includes(this.getDotPath(target, property))).forEach(sNode => sNode.update());
+            if (Array.isArray(value) || (typeof value === "object")) {
+                this.ancestry.set(value, { parent: target, keyname: property });
+                target[property] = new Proxy(value, this.relayProxy)
+            }
+            else {
+                target[property] = value;
+            }
 
+            this.registry.filter(sNode => sNode.watched.includes(this.getDotPath(target, property))).forEach(sNode => sNode.update());
             this.registry = this.registry.filter(sNode => this.rootElement.contains(sNode.nodes[0]));
 
             return true;
