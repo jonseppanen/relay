@@ -30,40 +30,70 @@ class Spark {
         this.update();
     }
 
+    shadowDomify = (node) => {
+        let nodeShell = node.cloneNode();
+        nodeShell.insertAdjacentHTML('afterbegin', node.querySelectorAll('style')[0].outerHTML.slice(0) + '<slot></slot>');
+        node.querySelectorAll('style')[0].remove();
+        let shadow = node.attachShadow({ mode: 'open' });
+        shadow.innerHTML = nodeShell.outerHTML;
+        return node;
+    }
+
     update = () => {
 
         this.watched = this.dotPath ? [this.dotPath] : [];
         let workNode = document.createElement('div');
-        //  if(Array.isArray(value)){
-        //    let relayValue = this.template || (this.dotPath && this.dotPath.split('.').reduce((o, i) => o && o[i], this.relay.data) || '').slice(0)
-        //     console.log(relayValue);
-        //    if(this.dotPath) console.log(this.dotPath.split('.'));
-        //    console.log(this.dotPath.split('.').reduce((o, i) => o && o[i], this.relay.data));
-        //    }
-        //  console.log('===========================');
-        //console.log(this.dotPath ? this.dotPath.split('.').reduce((o, i) => o && o[i], this.relay.data) : this.template);
-        let template = this.relay.inject((this.template || (this.dotPath.split('.').reduce((o, i) => o ? o[i] : null, this.relay.data) || '')).slice(0), this.watched, this.relay);
-        workNode.insertAdjacentHTML('afterbegin', template);
+
+        let templateSource = this.dotPath && this.dotPath.split('.').reduce((o, i) => o ? o[i] : null, this.relay.data);
+
+        if (Array.isArray(templateSource)) {
+            templateSource.forEach((template, iteration) => {
+                workNode.insertAdjacentHTML('beforeend', this.relay.inject(template.slice(0), [(this.watched + '.' + iteration)], this.relay));
+            })
+        }
+        else {
+            let template = this.relay.inject((this.template || (templateSource || '')).slice(0), this.watched, this.relay);
+            workNode.insertAdjacentHTML('beforeend', template);
+        }
+
         workNode.querySelectorAll('.RelayTarget').forEach(newSpark => this.relay.register([newSpark]))
 
-        let oldNodes = this.nodes;
-        let newNodes = Array.from(workNode.childNodes).reverse();
-        newNodes.forEach(node => {
+       // let newNodes = Array.from(workNode.childNodes);
 
-            if (node.nodeType !== 3 && node.querySelectorAll('style').length > 0) {
-                let nodeShell = node.cloneNode();
-                nodeShell.insertAdjacentHTML('afterbegin', node.querySelectorAll('style')[0].outerHTML.slice(0) + '<slot></slot>');
-                node.querySelectorAll('style')[0].remove();
-                let shadow = node.attachShadow({ mode: 'open' });
-                shadow.innerHTML = nodeShell.outerHTML;
+        let newNodes = Array.from(workNode.childNodes).reverse().map((node, index) => (node.nodeType !== 3 && node.querySelectorAll('style').length > 0) ? this.shadowDomify(node) : node);
+
+        let parentDom = this.nodes[0].parentNode;
+/*
+        newNodes.forEach((newNode, index) => {
+            if(this.nodes[index]){
+                this.nodes[index] = newNode;
             }
+            else{
+                this.nodes.push(newNode);
+            }
+        })*/
 
-            oldNodes[0].parentNode.insertBefore(node, oldNodes[0].nextSibling)
+        
+
+
+     /*   newNodes.forEach((node, index) => {
+            if (node.nodeType !== 3 && node.querySelectorAll('style').length > 0) this.shadowDomify(node)
+        })*/
+
+
+        //console.log(this.nodes);
+        //console.log(newNodes);
+       // console.log(parentDom);
+
+        newNodes.forEach((node, index) => {
+            this.nodes[0].parentNode.insertBefore(node, this.nodes[0].nextSibling)
         });
-        this.nodes = newNodes;
-        oldNodes.forEach(node => {
+
+        this.nodes.forEach(node => {
             node.remove()
         })
+
+        this.nodes = newNodes;
     }
 }
 
@@ -74,26 +104,28 @@ export class Relay {
         return sNode.nodes;
     }
 
-    getDotPath = (target, property) => {
+    getDotPath = (target, property = null) => {
         let pathString = ''
         let ancestor = this.ancestry.get(target);
         if (!ancestor) return property;
         while (ancestor.keyname) {
-            pathString += ancestor.keyname + '.';
+            pathString += ancestor.keyname;
             ancestor = ancestor.parent;
         }
-        pathString += property;
+        property !== null && (pathString += '.' + property);
         return pathString
     }
 
     inject = (template, watcher) => {
         const bigote = /\{\{([^\{\{\}\}]+)\}\}/g;
+
         if (Array.isArray(template)) {
+            console.log(template);
             template = template.join('');
+
         }
         return template.slice(0).replace(bigote, (match, variable) => {
             let value = variable.split('.').reduce((o, i) => o && o[i], this.data) || '';
-
             if (!value) {
                 if (!watcher.includes(variable)) watcher.push(variable); return '';
             }
@@ -103,32 +135,20 @@ export class Relay {
                 return value
             }
 
-            return '<script class="RelayTarget" data-value="' + variable + '" style="display:none;"></script>';
+            return '<span class="RelayTarget" data-value="' + variable + '" style="display:none;"></span>';
         });
     }
 
-    resolvePromises = async (value) => {
-        
-        if (Promise.resolve(value) == value) {
-            let promised = await value;
-            value = promised;
-        } else if (Array.isArray(value) && value.find(subValue => Promise.resolve(subValue) == subValue)) {
-            let promised = await Promise.all(value);
-            value = promised;
-        }
-        return value;
-    }
+
 
     relayProxy = {
         set: async (target, property, value) => {
 
-            //Await all pending promises before setting value
             if (Promise.resolve(value) == value) {
-                let promised = await value;
-                value = promised;
-            } else if (Array.isArray(value) && value.find(subValue => Promise.resolve(subValue) == subValue)) {
-                let promised = await Promise.all(value);
-                value = promised;
+                value = (await value);
+            }
+            if (Array.isArray(value)) {
+                value = (await Promise.all(value));
             }
 
             if (JSON.stringify(target[property]) === JSON.stringify(value)) return true;
@@ -141,8 +161,16 @@ export class Relay {
                 target[property] = value;
             }
 
-            this.registry.filter(sNode => sNode.watched.includes(this.getDotPath(target, property))).forEach(sNode => sNode.update());
+            if (Array.isArray(target)) {
+
+                this.registry.filter(sNode => sNode.watched.includes(this.getDotPath(target))).forEach(sNode => sNode.update());
+
+            }
+            else {
+                this.registry.filter(sNode => sNode.watched.includes(this.getDotPath(target, property))).forEach(sNode => sNode.update());
+            }
             this.registry = this.registry.filter(sNode => this.rootElement.contains(sNode.nodes[0]));
+
 
             return true;
         }

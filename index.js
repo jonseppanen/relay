@@ -40,13 +40,19 @@ window.gg2 = () => {
 window.gg3 = () => {
     return [
         Component('cardExample.html', '{{anchor5}}'),
-        Component('cardExample.html', '{{anchor5}}'),
+        'interstitial',
         Component('cardExample.html', '{{anchor5}}')
     ];
 }
 
 window.gg4 = () => {
-    return Component('cardExample.html', '{{anchor5}}')
+    R.anchor1.push(Component('cardExample.html', 'FUCK'));
+    //return Component('cardExample.html', '{{anchor5}}')
 }
 
+
+window.gg5 = () => {
+    R.anchor1[2] = Component('cardExample.html', 'SHIT');
+    //return Component('cardExample.html', '{{anchor5}}')
+}
 
