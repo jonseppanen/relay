@@ -58,42 +58,34 @@ class Spark {
 
         workNode.querySelectorAll('.RelayTarget').forEach(newSpark => this.relay.register([newSpark]))
 
-       // let newNodes = Array.from(workNode.childNodes);
-
-        let newNodes = Array.from(workNode.childNodes).reverse().map((node, index) => (node.nodeType !== 3 && node.querySelectorAll('style').length > 0) ? this.shadowDomify(node) : node);
+        let newNodes = Array.from(workNode.childNodes).map((node, index) => (node.nodeType !== 3 && node.querySelectorAll('style').length > 0) ? this.shadowDomify(node) : node);
 
         let parentDom = this.nodes[0].parentNode;
-/*
-        newNodes.forEach((newNode, index) => {
-            if(this.nodes[index]){
-                this.nodes[index] = newNode;
+
+        this.nodes.forEach((node, index) => {
+            if (!newNodes[index]) {
+                this.nodes[index].remove();
+                this.nodes[index] = null;
             }
-            else{
-                this.nodes.push(newNode);
+            else {
+                if (node === undefined || node.nodeType !== newNodes[index].nodeType ||
+                    (node.nodeValue !== newNodes[index].nodeValue || node.outerHTML !== newNodes[index].outerHTML)) {
+                    parentDom.insertBefore(newNodes[index], this.nodes[index]);
+                    this.nodes[index].remove();
+                    this.nodes[index] = newNodes[index];
+                }
             }
-        })*/
-
-        
-
-
-     /*   newNodes.forEach((node, index) => {
-            if (node.nodeType !== 3 && node.querySelectorAll('style').length > 0) this.shadowDomify(node)
-        })*/
-
-
-        //console.log(this.nodes);
-        //console.log(newNodes);
-       // console.log(parentDom);
-
-        newNodes.forEach((node, index) => {
-            this.nodes[0].parentNode.insertBefore(node, this.nodes[0].nextSibling)
-        });
-
-        this.nodes.forEach(node => {
-            node.remove()
         })
 
-        this.nodes = newNodes;
+        if (newNodes.length > this.nodes.length) {
+            newNodes.slice(this.nodes.length, newNodes.length).forEach((node, index) => {
+                parentDom.insertBefore(node, this.nodes[this.nodes.length - 1].nextSibling);
+                this.nodes.push(node);
+            })
+        }
+
+        this.nodes = this.nodes.filter(node => node !== null)
+
     }
 }
 
